@@ -62,7 +62,7 @@ if __name__=="__main__":
         dest_hostname=''
     gstring=''
     password=''
-    user='ertao.xu'
+    user=''
     host='192.168.21.250'
     password_login=get_login_str(gstring,password)
     login_skip(user,host,password_login,dest_hostname)
