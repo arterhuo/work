@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 #login ssh interact
-from optparse import OptionParser
-import re
 import pexpect
 import termios
 import datetime
@@ -11,55 +9,60 @@ import sys
 import time
 import signal
 import subprocess
-import struct
-import fcntl
-global child
+
 
 def sigwinch_passthrough (sig, data):
-
-    """This returns the window size of the child tty.
-    The return value is a tuple of (rows, cols).
-    """
+    # Check for buggy platforms (see pexpect.setwinsize()).
     if 'TIOCGWINSZ' in dir(termios):
         TIOCGWINSZ = termios.TIOCGWINSZ
     else:
-        TIOCGWINSZ = 1074295912L # Assume
-    s = struct.pack('HHHH', 0, 0, 0, 0)
-    x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
-    winsize = struct.unpack('HHHH', x)[0:2]
+        TIOCGWINSZ = 1074295912 # assume
+    s = struct.pack ("HHHH", 0, 0, 0, 0)
+    a = struct.unpack ('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    global global_pexpect_instance
+    global_pexpect_instance.setwinsize(a[0],a[1])
 
-    global child
-    child.setwinsize(winsize[0],winsize[1])
+def get_child_str(child):
+    index=child.expect(['assword','group','account'])
+    return index
 
-def login_skip(host,dest_hostname):
-    global child
-    child=pexpect.spawn('ssh {0}'.format(host.strip()))
-    child.setecho(False) #dublicates spawn call (trying to force)
-    index=child.expect('Opt>')
-    child.sendline("/{0}".format(dest_hostname))
-    index=child.expect('Opt>')
-    output=child.before
-    match=re.search(r'总共: \d+ 匹配: (\d+)',output)
-    if match and int(match.group(1)) == 1:
-        sendline = '1'
+def get_login_str(gstring,password):
+    cmd='java -jar gauth.jar {0} {1}'.format(gstring,password)
+    try:
+        p=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdoutput,erroutput) = p.communicate()
+    except Exception as e:
+        print e
     else:
-        sendline = "/{0}".format(dest_hostname)
-    child.sendline(sendline)
-    child.before.strip(sendline)
-    signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+        if stdoutput:
+                return stdoutput
+        if erroutput:
+            print erroutput 
+            exit(0)
+def login_skip(user,host,password,dest_hostname):
+    child=pexpect.spawn('ssh -A {0}@{1}'.format(user.strip(),host.strip()))
+    index=child.expect('assword:')
+    child.sendline(password)
+    global global_pexpect_instance
+    global_pexpect_instance = child
+    if dest_hostname:
+            index=child.expect('group:')
+            child.sendline("/{0}".format(dest_hostname))
+            index=child.expect('account:')
+            child.sendline('2')
     child.interact()
 
+        
+
 if __name__=="__main__":
-    usage = "usage: %prog dest_hostname"
-    parser = OptionParser(usage=usage)
-    (options, args) = parser.parse_args()
+    args=sys.argv
     try:
-        dest_hostname = args[0]
+        dest_hostname=args[1]
     except Exception as e:
-        parser.print_help()
-        exit(-1)
-    host='jump'
-    if dest_hostname:
-        login_skip(host,dest_hostname)
-    else:
-        parser.print_help()
+        dest_hostname=''
+    gstring=''
+    password=''
+    user='ertao.xu'
+    host='192.168.21.250'
+    password_login=get_login_str(gstring,password)
+    login_skip(user,host,password_login,dest_hostname)
