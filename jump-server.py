@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 #login ssh interact
 from optparse import OptionParser
+import getpass
 import re
 import pexpect
 import termios
@@ -31,11 +32,21 @@ def winsize():
     s = struct.pack('HHHH', 0, 0, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
     return struct.unpack('HHHH', x)[0:2]
+def while_expect(child):
+    index=child.expect(['Opt>','password:','\[MFA auth\]:'])
+    if index == 0:
+        return child
+    elif index == 1:
+        child.sendline(getpass.getpass(prompt=child.before+"password:"))
+        while_expect(child)
+    elif index == 2:
+        child.sendline(raw_input(child.before+"[MFA auth]:"))
+        while_expect(child)
 
 def login_skip(host,dest_hostname):
     global child
     child=pexpect.spawn('ssh {0}'.format(host.strip()))
-    index=child.expect('Opt>')
+    while_expect(child)
     child.sendline("/{0}".format(dest_hostname))
     index=child.expect('Opt>')
     output=child.before
