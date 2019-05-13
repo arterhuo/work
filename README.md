@@ -11,8 +11,9 @@
     ControlPersist 100h
   ```
   - cp jumpserver /usr/local/bin/jump
-    ```
-Usage: jump dest_hostname
+  ```
+    Usage: jump dest_hostname
 
 Options:
-  -h, --help  show this help message and exit```
+  -h, --help  show this help message and exit
+  ```
