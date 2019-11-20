@@ -4,11 +4,10 @@
   - 之后使用 java -jar gauth.jar 既可获得tfa numbers
 
   - .ssh/config 
-  ```Host *
-    SendEnv LANG LC_*
-    ControlMaster auto
-    ControlPath /tmp/ssh_mux_%h_%p_%r
-    ControlPersist 100h
+  ```Host jump
+      HostName bao.hostname
+      User username
+      Port port
   ```
   - cp jumpserver /usr/local/bin/jump
   ```
