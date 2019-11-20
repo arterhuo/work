@@ -4,7 +4,8 @@
   - 之后使用 java -jar gauth.jar 既可获得tfa numbers
 
   - .ssh/config 
-  ```Host jump
+  ```
+  Host jump
       HostName bao.hostname
       User username
       Port port
