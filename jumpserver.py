@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 #login ssh interact
 #author by ertao.xu
@@ -11,7 +11,7 @@ import termios
 import signal
 import struct
 import fcntl
-import commands
+import subprocess
 import time
 
 def sigwinch_passthrough (sig, data):
@@ -26,20 +26,23 @@ def winsize():
     if 'TIOCGWINSZ' in dir(termios):
         TIOCGWINSZ = termios.TIOCGWINSZ
     else:
-        TIOCGWINSZ = 1074295912L # Assume
+        TIOCGWINSZ = 1074295912
     s = struct.pack('HHHH', 0, 0, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
     return struct.unpack('HHHH', x)[0:2]
 
 def GetMFA():
-    PassMFA = commands.getoutput("cd ~/git/work && java -jar ~/git/work/gauth.jar")
-    return PassMFA.split()
+    #PassMFA = commands.getoutput("cd ~/git/work && java -jar ~/git/work/gauth.jar")
+    command = "cd ~/git/work && java -jar ~/git/work/gauth.jar"
+    PassMFA = subprocess.run(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding="utf-8",timeout=1)
+    return PassMFA.stdout.split()
 
 def while_expect(child):
     passwd,mfa = GetMFA()
+    passwd="ICU4CUleyan/"
     index=child.expect(['Opt>','password:','\[MFA auth\]:']) 
     if index == 0:
-        print child.before+'Opt>',
+        print(f"{child.before.decode(encoding='utf-8')}")
         return child
     elif index == 1:
         #child.sendline(getpass.getpass(prompt=child.before+"password:"))
